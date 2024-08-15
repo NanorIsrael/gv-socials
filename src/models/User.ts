@@ -1,3 +1,4 @@
+import * as bcrypt from "bcrypt";
 import mongoose, { Model, Document } from "mongoose";
 
 export interface UserI extends Document {
@@ -38,6 +39,17 @@ const UserSchema = new mongoose.Schema<UserI>(
   },
 );
 
-// export type UserModel = Model<UserI & Document>;
+UserSchema.pre<UserI>("save", async function (next) {
+  if (this.isModified("password") || this.isNew) {
+    const salt = await bcrypt.genSalt();
+    this.password = await bcrypt.hash(this.password, salt);
+  }
+  next();
+});
+
+UserSchema.statics.findUserByEmail = function (email: string) {
+  return this.findOne({ email })
+}
+
 const User: Model<UserI> = mongoose.model<UserI>("User", UserSchema);
 export default User;

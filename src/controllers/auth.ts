@@ -8,13 +8,15 @@ export const register = async (req: Request, res: Response) => {
   try {
     const { email, password, firstName, lastName } = req.body;
 
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const user = await User.findOne({ email })
+    if (user) {
+      return res.status(403).json({error: "email is in use."});
+    }
 
     const newUser = new User({
       firstName,
       lastName,
-      password: hashedPassword,
+      password,
       email,
     });
 
