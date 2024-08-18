@@ -13,6 +13,11 @@ export interface UserI extends Document {
   photo: string;
   viewedProfileNumber: Number;
   impressions: Number;
+  comparePassword(candidatePassword: string): Promise<boolean>;
+}
+
+export interface UserModel extends Model<UserI> {
+  findUserByEmail(email: string): Promise<UserI | null>;
 }
 
 const UserSchema = new mongoose.Schema<UserI>(
@@ -39,6 +44,16 @@ const UserSchema = new mongoose.Schema<UserI>(
   },
 );
 
+UserSchema.statics.findUserByEmail = function (email: string): Promise<UserI | null>  {
+  return this.findOne({ email })
+}
+
+UserSchema.methods.comparePassword = async function (
+  candidatePassword: string
+): Promise<boolean> {
+  return bcrypt.compare(candidatePassword, this.password);
+};
+
 UserSchema.pre<UserI>("save", async function (next) {
   if (this.isModified("password") || this.isNew) {
     const salt = await bcrypt.genSalt();
@@ -47,9 +62,6 @@ UserSchema.pre<UserI>("save", async function (next) {
   next();
 });
 
-UserSchema.statics.findUserByEmail = function (email: string) {
-  return this.findOne({ email })
-}
 
-const User: Model<UserI> = mongoose.model<UserI>("User", UserSchema);
+const User = mongoose.model<UserI, UserModel>("User", UserSchema);
 export default User;
