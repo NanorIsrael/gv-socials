@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import Post from "../models/Post";
-import User from "../models/User";
-import { UserDoc } from "../dtos/user";
+import User, { UserDoc } from "../models/User";
 
 export const createPost = async (req: Request, res: Response) => {
   try {
@@ -40,8 +39,8 @@ export const getFeedPosts = async (req: Request, res: Response) => {
           throw Error("a valid user was expected.");
         }
         const formattedResult = {
-          firstName: user._doc.firstName,
-          lastName: user._doc.lastName,
+          firstName: user.firstName,
+          lastName: user.lastName,
           _id: post._id,
           userId: post.userId,
           description: post.description,
@@ -104,8 +103,8 @@ export const likePost = async (req: Request, res: Response) => {
     }
 
     const formattedResult = {
-      firstName: user._doc.firstName,
-      lastName: user._doc.lastName,
+      firstName: user.firstName,
+      lastName: user.lastName,
       _id: updatedPost?._id,
       userId: updatedPost?.userId,
       description: updatedPost?.description,

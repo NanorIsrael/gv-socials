@@ -1,8 +1,7 @@
 import * as bcrypt from "bcrypt";
 import mongoose, { Model, Document } from "mongoose";
 
-export interface UserI extends Document {
-  _id: string;
+export interface UserI {
   email: string;
   password: string;
   lastName: string;
@@ -13,14 +12,19 @@ export interface UserI extends Document {
   photo: string;
   viewedProfileNumber: Number;
   impressions: Number;
+}
+
+export interface UserDoc extends UserI, Document {
+  _id: string; 
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
-export interface UserModel extends Model<UserI> {
-  findUserByEmail(email: string): Promise<UserI | null>;
+export interface UserModel extends Model<UserDoc> {
+  build(attr: UserI): UserDoc
+  findUserByEmail(email: string): Promise<UserDoc | null>;
 }
 
-const UserSchema = new mongoose.Schema<UserI>(
+const UserSchema = new mongoose.Schema(
   {
     firstName: { type: String, required: true, trim: true },
     lastName: { type: String, required: true, trim: true },
@@ -43,7 +47,9 @@ const UserSchema = new mongoose.Schema<UserI>(
     timestamps: true,
   },
 );
-
+UserSchema.statics.build = function (attr: UserI) { 
+  return new User(attr)
+}
 UserSchema.statics.findUserByEmail = function (email: string): Promise<UserI | null>  {
   return this.findOne({ email })
 }
@@ -54,7 +60,7 @@ UserSchema.methods.comparePassword = async function (
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-UserSchema.pre<UserI>("save", async function (next) {
+UserSchema.pre<UserDoc>("save", async function (next) {
   if (this.isModified("password") || this.isNew) {
     const salt = await bcrypt.genSalt();
     this.password = await bcrypt.hash(this.password, salt);
@@ -63,5 +69,5 @@ UserSchema.pre<UserI>("save", async function (next) {
 });
 
 
-const User = mongoose.model<UserI, UserModel>("User", UserSchema);
+const User = mongoose.model<UserDoc, UserModel>("User", UserSchema);
 export default User;

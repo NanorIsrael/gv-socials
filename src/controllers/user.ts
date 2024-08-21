@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
-import User, { UserI } from "../models/User";
-import { UserDoc } from "../dtos/user";
+import User, { UserDoc, UserI } from "../models/User";
 
 /* REGISTER USER */
 export const userProfile = async (req: Request, res: Response) => {
@@ -13,8 +12,6 @@ export const userProfile = async (req: Request, res: Response) => {
         photo,
         location,
         occupation,
-        viewedProfileNumber: Math.ceil(Math.random() * 10000 - 1),
-        impressions: Math.ceil(Math.random() * 1000 - 1),
       },
       {
         upsert: true,
@@ -22,7 +19,7 @@ export const userProfile = async (req: Request, res: Response) => {
       },
     );
 
-    const savedUser: UserI = await updatedUser.save();
+    const savedUser: UserDoc = await updatedUser.save();
     const clonedUser: { password?: string } = savedUser;
     delete clonedUser.password;
     res.status(201).json(clonedUser);
@@ -51,10 +48,10 @@ export const getUserFriends = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "invalid user id." });
     }
 
-    const friends: UserI[] = (
+    const friends: UserDoc[] = (
       await Promise.all(user.friends.map(async (id) => await User.findById(id)))
     ).filter(
-      (friend): friend is UserI => friend !== null && friend !== undefined,
+      (friend): friend is UserDoc => friend !== null && friend !== undefined,
     );
 
     const formattedFriends = friends.map(
@@ -102,10 +99,10 @@ export const addRemoveFriends = async (req: Request, res: Response) => {
     const savedUser = await user?.save();
     await friend?.save();
 
-    const friends: UserI[] = (
-      await Promise.all(savedUser!.friends.map((id) => User.findById(id)))
+    const friends: UserDoc[] = (
+      await Promise.all(savedUser.friends.map((id) => User.findById(id)))
     ).filter(
-      (friend): friend is any => friend !== null && friend !== undefined,
+      (friend): friend is UserDoc => friend !== null && friend !== undefined,
     );
 
     const formattedFriends = friends.map(

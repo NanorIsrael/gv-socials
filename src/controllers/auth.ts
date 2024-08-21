@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { Request, Response } from "express";
-import User, { UserI } from "../models/User";
+import User, { UserDoc, UserI } from "../models/User";
 
 /* REGISTER USER */
 export const register = async (req: Request, res: Response) => {
@@ -13,14 +13,20 @@ export const register = async (req: Request, res: Response) => {
       return res.status(403).json({error: "email is in use."});
     }
 
-    const newUser = new User({
+    const newUser = User.build({
       firstName,
       lastName,
       password,
       email,
+      friends: [],
+      occupation: '',
+      location: '',
+      photo: '',
+      impressions: Math.ceil(Math.random() * 10000 - 1),
+      viewedProfileNumber: Math.ceil(Math.random() * 1000 - 1),
     });
 
-    const savedUser: UserI = await newUser.save();
+    const savedUser: UserDoc = await newUser.save();
     const clonedUser: { password?: string } = savedUser;
     delete clonedUser.password;
     res.status(201).json(clonedUser);
@@ -44,7 +50,7 @@ export const login = async (req: Request, res: Response) => {
 
     if (!isMatch) {
       return res
-        .status(400)
+        .status(401)
         .json({ message: "email and password do not match" });
     }
 
